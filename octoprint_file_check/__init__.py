@@ -99,7 +99,7 @@ class FileCheckPlugin(octoprint.plugin.AssetPlugin,
 
 
 __plugin_name__ = "File Check"
-__plugin_pycompat__ = ">2.7,<4"
+__plugin_pythoncompat__ = ">2.7,<4"
 __plugin_disabling_discouraged__ = gettext("Without this plugin OctoPrint will no longer be able to "
                                            "check if uploaded files contain common problems and inform you "
                                            "about that fact.")
