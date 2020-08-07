@@ -64,10 +64,16 @@ class FileCheckPlugin(octoprint.plugin.AssetPlugin,
 			if self._search_through_file(path_on_disk, "{travel_speed}"):
 				self._notify("travel_speed", storage, path)
 
-	def _search_through_file(self, path, term):
+	def _search_through_file(self, path, term, incl_comments=False):
+		if incl_comments:
+			pattern = re.escape(term)
+		else:
+			pattern = r"^[^;]*" + re.escape(term)
+		compiled = re.compile(pattern)
+
 		try:
 			# try native grep
-			result = sarge.run(["grep", "-q", re.escape(term), path])
+			result = sarge.run(["grep", "-q", pattern, path])
 			return result.returncode == 0
 		except ValueError as exc:
 			if 'Command not found' in str(exc):
@@ -75,7 +81,7 @@ class FileCheckPlugin(octoprint.plugin.AssetPlugin,
 					# try python only approach
 					with io.open(path, mode="r", encoding="utf8", errors="replace") as f:
 						for line in f:
-							if term in line:
+							if term in line and (incl_comments or compiled.match(line)):
 								return True
 					return False
 				except:
