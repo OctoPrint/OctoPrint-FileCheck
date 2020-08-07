@@ -19,4 +19,4 @@ In case you want to manually install it into an older version for whatever reaso
 [Plugin Manager](https://docs.octoprint.org/en/master/bundledplugins/pluginmanager.html)
 or manually using this URL:
 
-    https://github.com/OctoPrint/OctoPrint-GcodeValidator/archive/master.zip
+    https://github.com/OctoPrint/OctoPrint-FileCheck/archive/master.zip
