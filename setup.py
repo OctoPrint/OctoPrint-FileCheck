@@ -14,7 +14,7 @@ plugin_package = "octoprint_file_check"
 plugin_name = "OctoPrint-FileCheck"
 
 # The plugin's version. Can be overwritten within OctoPrint's internal data via __plugin_version__ in the plugin module
-plugin_version = "2020.07.06"
+plugin_version = "2020.08.07"
 
 # The plugin's description. Can be overwritten within OctoPrint's internal data via __plugin_description__ in the plugin
 # module
