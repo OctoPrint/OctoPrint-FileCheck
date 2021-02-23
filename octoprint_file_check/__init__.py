@@ -84,7 +84,7 @@ class FileCheckPlugin(octoprint.plugin.AssetPlugin, octoprint.plugin.EventHandle
 
         try:
             # try native grep
-            result = sarge.run(["grep", "-q", pattern, path])
+            result = sarge.run(["grep", "-q", "-E", pattern, path])
             return result.returncode == 0
         except ValueError as exc:
             if "Command not found" in str(exc):
