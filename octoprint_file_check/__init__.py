@@ -45,6 +45,18 @@ class FileCheckPlugin(octoprint.plugin.AssetPlugin, octoprint.plugin.EventHandle
                 user="OctoPrint",
                 repo="OctoPrint-FileCheck",
                 current=self._plugin_version,
+                stable_branch={
+                    "name": "Stable",
+                    "branch": "master",
+                    "commitish": ["devel", "master"],
+                },
+                prerelease_branches=[
+                    {
+                        "name": "Prerelease",
+                        "branch": "devel",
+                        "commitish": ["devel", "master"],
+                    }
+                ],
                 # update method: pip
                 pip="https://github.com/OctoPrint/OctoPrint-FileCheck/archive/{target_version}.zip",
             )
