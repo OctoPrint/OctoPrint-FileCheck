@@ -83,29 +83,38 @@ class FileCheckPlugin(octoprint.plugin.AssetPlugin, octoprint.plugin.EventHandle
         compiled = re.compile(pattern)
 
         try:
-            # try native grep
-            result = sarge.run(["grep", "-q", "-E", pattern, path])
-            return result.returncode == 0
-        except ValueError as exc:
-            if "Command not found" in str(exc):
-                try:
-                    # try python only approach
-                    with io.open(path, mode="r", encoding="utf8", errors="replace") as f:
-                        for line in f:
-                            if term in line and (incl_comments or compiled.match(line)):
-                                return True
-                    return False
-                except Exception:
-                    self._logger.exception(
-                        "Something unexpectedly went wrong while trying to "
-                        "search for {} in {} via native python".format(term, path)
+            try:
+                # try native grep
+                result = sarge.capture_stderr(["grep", "-q", "-E", pattern, path])
+                if result.stderr.text:
+                    self._logger.warning(
+                        "Error raised by native grep, falling back to python "
+                        "implementation: {}".format(result.stderr.text.strip())
                     )
-            else:
-                self._logger.exception(
-                    "Something unexpectedly went wrong while trying to "
-                    "search for {} in {} via grep".format(term, path)
-                )
+                    return self._search_through_file_python(
+                        path, term, compiled, incl_comments=incl_comments
+                    )
+                return result.returncode == 0
+            except ValueError as exc:
+                if "Command not found" in str(exc):
+                    return self._search_through_file_python(
+                        path, term, compiled, incl_comments=incl_comments
+                    )
+                else:
+                    raise
+        except Exception:
+            self._logger.exception(
+                "Something unexpectedly went wrong while trying to "
+                "search for {} in {} via grep".format(term, path)
+            )
 
+        return False
+
+    def _search_through_file_python(self, path, term, compiled, incl_comments=False):
+        with io.open(path, mode="r", encoding="utf8", errors="replace") as f:
+            for line in f:
+                if term in line and (incl_comments or compiled.match(line)):
+                    return True
         return False
 
     def _notify(self, notification_type, storage, path):
