@@ -1,10 +1,6 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 __license__ = "GNU Affero General Public License http://www.gnu.org/licenses/agpl.html"
 __copyright__ = "Copyright (C) 2020 The OctoPrint Project - Released under terms of the AGPLv3 License"
 
-import io
 import re
 
 # noinspection PyCompatibility
@@ -111,7 +107,7 @@ class FileCheckPlugin(octoprint.plugin.AssetPlugin, octoprint.plugin.EventHandle
         return False
 
     def _search_through_file_python(self, path, term, compiled, incl_comments=False):
-        with io.open(path, mode="r", encoding="utf8", errors="replace") as f:
+        with open(path, encoding="utf8", errors="replace") as f:
             for line in f:
                 if term in line and (incl_comments or compiled.match(line)):
                     return True
