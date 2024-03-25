@@ -37,7 +37,11 @@ $(function () {
         };
 
         self.requestData = function () {
-            if (!self.loginState.hasPermission(self.access.permissions.FILES_DOWNLOAD))
+            if (
+                !self.loginState.hasPermission(
+                    self.access.permissions.PLUGIN_FILE_CHECK_RUN
+                )
+            )
                 return $.Deferred().reject();
             return OctoPrint.plugins.file_check.get().done(self.fromResponse);
         };
@@ -58,7 +62,11 @@ $(function () {
         };
 
         self.checkAll = function () {
-            if (!self.loginState.hasPermission(self.access.permissions.FILES_DOWNLOAD))
+            if (
+                !self.loginState.hasPermission(
+                    self.access.permissions.PLUGIN_FILE_CHECK_RUN
+                )
+            )
                 return;
 
             showConfirmationDialog({
@@ -90,12 +98,18 @@ $(function () {
             return (
                 self.checkResult() &&
                 self.checkResult()[key] &&
-                self.loginState.hasPermission(self.access.permissions.FILES_DOWNLOAD)
+                self.loginState.hasPermission(
+                    self.access.permissions.PLUGIN_FILE_CHECK_RUN
+                )
             );
         };
 
         self.showCheckResult = function (storage, file) {
-            if (!self.loginState.hasPermission(self.access.permissions.FILES_DOWNLOAD))
+            if (
+                !self.loginState.hasPermission(
+                    self.access.permissions.PLUGIN_FILE_CHECK_RUN
+                )
+            )
                 return;
 
             if (_.isPlainObject(storage)) {
@@ -150,7 +164,11 @@ $(function () {
         self.onDataUpdaterPluginMessage = function (plugin, data) {
             if (plugin !== "file_check") return;
 
-            if (!self.loginState.hasPermission(self.access.permissions.FILES_DOWNLOAD))
+            if (
+                !self.loginState.hasPermission(
+                    self.access.permissions.PLUGIN_FILE_CHECK_RUN
+                )
+            )
                 return;
 
             switch (data["action"]) {
@@ -231,7 +249,7 @@ $(function () {
                     class: "filecheck-trigger accordion-heading-button btn-group",
                     attr: {
                         "data-bind":
-                            "visible: $root.fileCheckViewModel.fullCheckAvailable() && $root.loginState.hasPermission($root.access.permissions.FILES_DOWNLOAD)"
+                            "visible: $root.fileCheckViewModel.fullCheckAvailable() && $root.loginState.hasPermission($root.access.permissions.PLUGIN_FILE_CHECK_RUN)"
                     }
                 }).append(
                     $("<a/>", {
@@ -256,7 +274,7 @@ $(function () {
 
             const regex = /<div class="uploaded">/;
             const template =
-                "<div class='filecheck_result' data-bind='visible: $root.fileCheckViewModel.hasCheckResult($data) && $root.loginState.hasPermission($root.access.permissions.FILES_DOWNLOAD)'><small>" +
+                "<div class='filecheck_result' data-bind='visible: $root.fileCheckViewModel.hasCheckResult($data) && $root.loginState.hasPermission($root.access.permissions.PLUGIN_FILE_CHECK_RUN)'><small>" +
                 "<a href='javascript:void(0)' class='text-error' style='text-decoration: underline' data-bind='click: function() { $root.fileCheckViewModel.showCheckResult($data) }'>" +
                 "<i class='fas fa-exclamation-circle'></i> " +
                 gettext("File Check detected issues with this file!") +
@@ -272,7 +290,7 @@ $(function () {
                 $("<small/>", {
                     attr: {
                         "data-bind":
-                            "visible: $root.fileCheckViewModel.hasCheckResult($root.filepath()) && $root.loginState.hasPermission($root.access.permissions.FILES_DOWNLOAD)"
+                            "visible: $root.fileCheckViewModel.hasCheckResult($root.filepath()) && $root.loginState.hasPermission($root.access.permissions.PLUGIN_FILE_CHECK_RUN)"
                     }
                 })
                     .append(

@@ -15,6 +15,7 @@ import octoprint.events
 import octoprint.plugin
 import sarge
 from flask_babel import gettext
+from octoprint.access import ADMIN_GROUP, USER_GROUP
 from octoprint.filemanager import get_file_type
 
 CHECKS = {
@@ -107,7 +108,7 @@ class FileCheckPlugin(
     ##~~ SimpleApiPlugin API
 
     def on_api_get(self, request):
-        if not octoprint.access.permissions.Permissions.FILES_DOWNLOAD.can():
+        if not octoprint.access.permissions.Permissions.PLUGIN_FILE_CHECK_RUN.can():
             return flask.make_response("Insufficient rights", 403)
 
         response = {
@@ -121,7 +122,7 @@ class FileCheckPlugin(
 
     def on_api_command(self, command, data):
         if command == "check_all":
-            if not octoprint.access.permissions.Permissions.FILES_DOWNLOAD.can():
+            if not octoprint.access.permissions.Permissions.PLUGIN_FILE_CHECK_RUN.can():
                 return flask.make_response("Insufficient rights", 403)
 
             self._start_full_check()
@@ -129,6 +130,19 @@ class FileCheckPlugin(
                 status=202,
                 headers={"Location": flask.url_for("index") + "api/plugin/file_check"},
             )
+
+    ##~~ Additional permissions hook
+
+    def get_additional_permissions(self):
+        return [
+            {
+                "key": "RUN",
+                "name": "Run File Check",
+                "description": gettext("Allows to run File Check and view the results."),
+                "default_groups": [USER_GROUP, ADMIN_GROUP],
+                "roles": ["run"],
+            }
+        ]
 
     ##~~ SoftwareUpdate hook
 
@@ -322,5 +336,6 @@ __plugin_disabling_discouraged__ = gettext(
 
 __plugin_implementation__ = FileCheckPlugin()
 __plugin_hooks__ = {
-    "octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information
+    "octoprint.access.permissions": __plugin_implementation__.get_additional_permissions,
+    "octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
 }
