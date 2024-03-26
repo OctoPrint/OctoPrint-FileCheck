@@ -13,7 +13,7 @@ It currently detects and warns about the following issues:
   * API keys leaked by the slicer into the GCODE. See
     [here](https://faq.octoprint.org/file-check-leaked-api-key) for details on this.
 
-Since version @@TODO@@ it also supports checking selected files as well as all uploaded files for issues on
+Since version 2024.3.27 it also supports checking selected files as well as all uploaded files for issues on
 the press of a button (if `grep` is available), not just freshly uploaded files.
 
 ## Setup
