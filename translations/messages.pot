@@ -1,30 +1,31 @@
 # Translations template for OctoPrint-FileCheck.
-# Copyright (C) 2020 The OctoPrint Project
+# Copyright (C) 2024 The OctoPrint Project
 # This file is distributed under the same license as the OctoPrint-FileCheck
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2020.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: OctoPrint-FileCheck 2020.6.22\n"
+"Project-Id-Version: OctoPrint-FileCheck 2024.3.27\n"
 "Report-Msgid-Bugs-To: i18n@octoprint.org\n"
-"POT-Creation-Date: 2020-06-22 16:27+0200\n"
+"POT-Creation-Date: 2024-03-26 14:08+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.8.0\n"
+"Generated-By: Babel 2.12.1\n"
 
-#: octoprint_file_check/__init__.py:103
+#: build/lib/octoprint_file_check/__init__.py:138
+#: octoprint_file_check/__init__.py:421
 msgid ""
 "Without this plugin OctoPrint will no longer be able to check if uploaded"
 " files contain common problems and inform you about that fact."
 msgstr ""
 
-#: octoprint_file_check/static/js/file_check.js:12
+#: build/lib/octoprint_file_check/static/js/file_check.js:12
 msgid ""
 "Your sliced file still contains a place holder "
 "<code>{travel_speed}</code>. This is a common issue when using old "
@@ -35,12 +36,123 @@ msgid ""
 "cause issues!"
 msgstr ""
 
-#: octoprint_file_check/static/js/file_check.js:31
+#: build/lib/octoprint_file_check/static/js/file_check.js:35
+#: octoprint_file_check/static/js/file_check.js:156
+#: octoprint_file_check/static/js/file_check.js:221
 msgid "Read more..."
 msgstr ""
 
-#: octoprint_file_check/static/js/file_check.js:34
+#: build/lib/octoprint_file_check/static/js/file_check.js:40
 #, python-format
 msgid "File Check detected issues with %(storage)s:%(path)s!"
+msgstr ""
+
+#: octoprint_file_check/__init__.py:160
+msgid "Allows to run File Check and view the results."
+msgstr ""
+
+#: octoprint_file_check/static/js/file_check.js:21
+msgid ""
+"Your file still contains a place holder <code>{travel_speed}</code>. This"
+" is a common issue when using old start/stop GCODE code snippets in "
+"current versions of Cura, as the placeholder name switched to "
+"<code>{speed_travel}</code> at some point and no longer gets replaced in "
+"current versions. You need to fix this in your slicer and reslice your "
+"file, do not print it like it is as it will cause issues!"
+msgstr ""
+
+#: octoprint_file_check/static/js/file_check.js:30
+msgid ""
+"Your file contains an API key that is not supposed to be there. This is "
+"caused by a bug in your slicer, and known to happen with PrusaSlicer (<= "
+"2.1.1), BambuStudio (<= 1.8.4) and OrcaSlicer (<= 1.9.0). Do not share "
+"this file with anyone, update your slicer to a patched version "
+"immediately, and reslice your file. Also consider changing your API key "
+"in OctoPrint, as it might have been leaked by your slicer to third "
+"parties through any GCODE files shared previously."
+msgstr ""
+
+#: octoprint_file_check/static/js/file_check.js:44
+msgid "unknown"
+msgstr ""
+
+#: octoprint_file_check/static/js/file_check.js:50
+msgid "Current set of checks"
+msgstr ""
+
+#: octoprint_file_check/static/js/file_check.js:52
+msgid "Outdated set of checks"
+msgstr ""
+
+#: octoprint_file_check/static/js/file_check.js:90
+msgid "Run File Check on all files?"
+msgstr ""
+
+#: octoprint_file_check/static/js/file_check.js:91
+msgid ""
+"This will perform a check of all of your uploaded files for known issues."
+" Depending on the amount of files this could take several minutes. It "
+"should not be done while a print is running."
+msgstr ""
+
+#: octoprint_file_check/static/js/file_check.js:161
+msgid "File Check detected the following issues:"
+msgstr ""
+
+#: octoprint_file_check/static/js/file_check.js:241
+#, python-format
+msgid "File Check detected issues with %(path)s!"
+msgstr ""
+
+#: octoprint_file_check/static/js/file_check.js:269
+#: octoprint_file_check/static/js/file_check.js:302
+msgid "File Check detected issues with this file!"
+msgstr ""
+
+#: octoprint_file_check/templates/file_check_settings.jinja2:1
+msgid "File Check"
+msgstr ""
+
+#: octoprint_file_check/templates/file_check_settings.jinja2:3
+msgid ""
+"\n"
+"    The bundled File Check plugin allows checking your uploaded files for"
+" known slicer misconfigurations and related issues.\n"
+"    The plugin automatically checks all freshly uploaded files and files "
+"selected for printing, but for already uploaded\n"
+"    files you can also trigger a full file check manually. It is "
+"recommended to do this whenever new checks are added\n"
+"    to the plugin, in which case your last check will be marked as "
+"outdated below.\n"
+msgstr ""
+
+#: octoprint_file_check/templates/file_check_wizard.jinja2:1
+msgid "A full File Check is suggested"
+msgstr ""
+
+#: octoprint_file_check/templates/file_check_wizard.jinja2:3
+msgid ""
+"\n"
+"    The bundled File Check plugin has been updated with new high priority"
+" checks. It is recommended to run a \n"
+"    full file check now to ensure that you are aware of any critical "
+"issues in your uploaded files. Depending on the \n"
+"    size of your upload folder, this may take several minutes.\n"
+msgstr ""
+
+#: octoprint_file_check/templates/file_check_wizard.jinja2:9
+msgid ""
+"\n"
+"    You can run a full file check by clicking the button below or "
+"alternatively at any time from the\n"
+"    File Check plugin settings.\n"
+msgstr ""
+
+#: octoprint_file_check/templates/snippets/fileCheckButton.jinja2:1
+msgid "Run full file check now"
+msgstr ""
+
+#: octoprint_file_check/templates/snippets/fileCheckButton.jinja2:3
+msgid "Last check:"
 msgstr ""
 
