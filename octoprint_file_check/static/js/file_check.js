@@ -11,6 +11,9 @@ $(function () {
         self.checkResult = ko.observable();
         self.checkRunning = ko.observable(false);
 
+        self.lastCheckTimestamp = ko.observable();
+        self.lastCheckCurrent = ko.observable();
+
         self.issueNotification = undefined;
 
         const ISSUES = {
@@ -36,6 +39,28 @@ $(function () {
             }
         };
 
+        self.lastCheckTimestampText = ko.pureComputed(() => {
+            return formatDate(self.lastCheckTimestamp(), {
+                placeholder: gettext("unknown")
+            });
+        });
+
+        self.lastCheckStateText = ko.pureComputed(() => {
+            if (self.lastCheckCurrent()) {
+                return gettext("Current set of checks");
+            } else {
+                return gettext("Outdated set of checks");
+            }
+        });
+
+        self.lastCheckStateClass = ko.pureComputed(() => {
+            if (self.lastCheckCurrent()) {
+                return "text-success";
+            } else {
+                return "text-error";
+            }
+        });
+
         self.requestData = function () {
             if (
                 !self.loginState.hasPermission(
@@ -48,17 +73,9 @@ $(function () {
 
         self.fromResponse = function (response) {
             self.fullCheckAvailable(response.native_grep);
-
-            if (response.check_result) {
-                const result = {};
-                for (const [key, value] of Object.entries(response.check_result)) {
-                    for (const filename of value) {
-                        result[filename] = result[filename] || [];
-                        result[filename].push(key);
-                    }
-                }
-                self.checkResult(result);
-            }
+            self.checkResult(response.check_result);
+            self.lastCheckTimestamp(response.last_full_check.timestamp);
+            self.lastCheckCurrent(response.last_full_check.current);
         };
 
         self.checkAll = function () {
@@ -133,7 +150,7 @@ $(function () {
                     $("<a/>", {
                         href:
                             "https://faq.octoprint.org/file-check-" +
-                            issue.replace("_", "-"),
+                            issue.replaceAll("_", "-"),
                         target: "_blank",
                         rel: "noreferrer noopener",
                         text: gettext("Read more...")
@@ -146,7 +163,9 @@ $(function () {
 
             if (data.length === 1) {
                 const issue = data[0];
-                message = getMessage(issue).after(getReadMore(issue));
+                message = $("<div/>")
+                    .append(getMessage(issue))
+                    .append(getReadMore(issue));
             } else {
                 message = $("<ul/>").append(
                     data.map((issue) =>
@@ -199,7 +218,7 @@ $(function () {
 
                 const faq =
                     "<a href='https://faq.octoprint.org/file-check-" +
-                    t.replace("_", "-") +
+                    t.replaceAll("_", "-") +
                     "' target='_blank' rel='noreferrer noopener'>" +
                     gettext("Read more...") +
                     "</a>";
@@ -243,34 +262,6 @@ $(function () {
             self.printerState.fileCheckViewModel = self;
 
             // files list injection
-
-            $("#files_wrapper .accordion-heading").append(
-                $("<div/>", {
-                    class: "filecheck-trigger accordion-heading-button btn-group",
-                    attr: {
-                        "data-bind":
-                            "visible: $root.fileCheckViewModel.fullCheckAvailable() && $root.loginState.hasPermission($root.access.permissions.PLUGIN_FILE_CHECK_RUN)"
-                    }
-                }).append(
-                    $("<a/>", {
-                        href: "javascript:void(0);",
-                        attr: {
-                            "data-bind":
-                                "click: function () { if (!$root.printerState.isPrinting()) { $root.fileCheckViewModel.checkAll() } },",
-                            "title": gettext("Run File Check on all files"),
-                            "aria-label": gettext("Run File Check on all files")
-                        }
-                    }).append(
-                        $("<i/>", {
-                            class: "fas",
-                            attr: {
-                                "data-bind":
-                                    "css: {'fa-spinner fa-spin': $root.fileCheckViewModel.checkRunning, 'fa-stamp': !$root.fileCheckViewModel.checkRunning(), 'muted': $root.fileCheckViewModel.checkRunning() || $root.printerState.isPrinting()}"
-                            }
-                        })
-                    )
-                )
-            );
 
             const regex = /<div class="uploaded">/;
             const template =
@@ -329,6 +320,7 @@ $(function () {
             "accessViewModel",
             "printerStateViewModel",
             "filesViewModel"
-        ]
+        ],
+        elements: ["#wizard_plugin_file_check", "#settings_plugin_file_check"]
     });
 });

@@ -1,0 +1,4 @@
+<button class="btn btn-primary btn-block" data-bind="click: function() { if (!checkRunning()) { checkAll(); } }, enabled: !checkRunning(), css: {disabled: checkRunning}"><i class="fas fa-spinner fa-spin" data-bind="visible: checkRunning"></i> {{ _("Run full file check now") }}</button>
+<p>
+    <strong>{{ _("Last check:") }}</strong> <span data-bind="text: lastCheckTimestampText"></span> <span data-bind="visible: lastCheckTimestamp">(<span data-bind="text: lastCheckStateText, class: lastCheckStateClass"></span>)</span>
+</p>

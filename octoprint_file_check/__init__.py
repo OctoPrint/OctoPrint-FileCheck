@@ -1,9 +1,12 @@
 __license__ = "GNU Affero General Public License http://www.gnu.org/licenses/agpl.html"
 __copyright__ = "Copyright (C) 2020 The OctoPrint Project - Released under terms of the AGPLv3 License"
 
+import glob
+import json
 import os
 import re
 import threading
+import time
 from collections import defaultdict
 
 # noinspection PyCompatibility
@@ -18,6 +21,9 @@ from flask_babel import gettext
 from octoprint.access import ADMIN_GROUP, USER_GROUP
 from octoprint.filemanager import get_file_type
 
+WIZARD_VERSION = 1  # bump on addition of critical checks
+
+CHECKS_VERSION = 1  # bump on any change to the checks
 CHECKS = {
     "travel_speed": {
         "pattern": "{travel_speed}",
@@ -34,11 +40,13 @@ class FileCheckPlugin(
     octoprint.plugin.EventHandlerPlugin,
     octoprint.plugin.SettingsPlugin,
     octoprint.plugin.SimpleApiPlugin,
+    octoprint.plugin.TemplatePlugin,
+    octoprint.plugin.WizardPlugin,
 ):
     def __init__(self):
         self._executor = ThreadPoolExecutor()
 
-        self._native_grep_available = True
+        self._native_grep_available = False
 
         self._full_check_lock = threading.RLock()
         self._check_result = {}
@@ -46,6 +54,7 @@ class FileCheckPlugin(
     def initialize(self):
         try:
             sarge.run(["grep", "-q", "--version"])
+            self._native_grep_available = True
         except Exception as exc:
             if "Command not found" in str(exc):
                 self._native_grep_available = False
@@ -77,44 +86,29 @@ class FileCheckPlugin(
                 self._validate_file, payload["origin"], payload["path"], file_type
             )
 
-        elif event == octoprint.events.Events.FILE_REMOVED:
-            dirty = True
-            with self._full_check_lock:
-                for check in self._check_result:
-                    current = len(self._check_result[check])
-                    self._check_result[check] = [
-                        path
-                        for path in self._check_result[check]
-                        if path != f"{payload['storage']}:{payload['path']}"
-                    ]
-                    dirty = dirty or len(self._check_result[check]) < current
-            if dirty:
-                self._trigger_check_update()
-
-        elif event == octoprint.events.Events.FOLDER_REMOVED:
-            dirty = False
-            with self._full_check_lock:
-                for check in self._check_result:
-                    current = len(self._check_result[check])
-                    self._check_result[check] = [
-                        path
-                        for path in self._check_result[check]
-                        if not path.startswith(f"{payload['storage']}:{payload['path']}/")
-                    ]
-                    dirty = dirty or len(self._check_result[check]) < current
-            if dirty:
-                self._trigger_check_update()
-
     ##~~ SimpleApiPlugin API
 
     def on_api_get(self, request):
         if not octoprint.access.permissions.Permissions.PLUGIN_FILE_CHECK_RUN.can():
             return flask.make_response("Insufficient rights", 403)
 
+        last_check_info = self._load_last_check_info()
+
         response = {
             "native_grep": self._native_grep_available,
-            "check_result": self._check_result,
+            "last_full_check": {
+                "timestamp": last_check_info.get("timestamp"),
+                "current": last_check_info.get("version") == CHECKS_VERSION,
+            },
         }
+
+        if octoprint.access.permissions.Permissions.FILES_LIST.can():
+            # only return the check result if the user has permissions
+            # to see a file list, otherwise we might leak data
+            response[
+                "check_result"
+            ] = self._gather_from_local_metadata()  # TODO: caching?
+
         return flask.jsonify(**response)
 
     def get_api_commands(self):
@@ -130,6 +124,39 @@ class FileCheckPlugin(
                 status=202,
                 headers={"Location": flask.url_for("index") + "api/plugin/file_check"},
             )
+
+    ##~~ TemplatePlugin API
+
+    def get_template_configs(self):
+        if not self._native_grep_available:
+            return []
+
+        return [
+            dict(
+                type="wizard",
+                template="file_check_wizard_grep.jinja2",
+                custom_bindings=True,
+            ),
+            dict(
+                type="settings",
+                template="file_check_settings_grep.jinja2",
+                custom_bindings=True,
+            ),
+        ]
+
+    ##~~ WizardPlugin API
+
+    def is_wizard_required(self):
+        last_check_info = self._load_last_check_info()
+        first_run = self._settings.global_get_boolean(["server", "firstRun"])
+        return (
+            self._native_grep_available
+            and last_check_info.get("version") != CHECKS_VERSION
+            and not first_run
+        )
+
+    def get_wizard_version(self):
+        return WIZARD_VERSION
 
     ##~~ Additional permissions hook
 
@@ -177,33 +204,26 @@ class FileCheckPlugin(
 
     def _start_full_check(self):
         with self._full_check_lock:
-            self._check_result = None
             job = self._executor.submit(self._check_all_files)
             job.add_done_callback(self._full_check_done)
 
     def _full_check_done(self, future):
         try:
-            result = future.result()
+            future.result()
         except Exception:
             self._logger.exception("Full check failed")
             return
-
-        path_to_checks = defaultdict(list)
-        for check, matches in result.items():
-            for match in matches:
-                path_to_checks[match].append(check)
-
         self._trigger_check_update()
 
     def _check_all_files(self):
-        with self._full_check_lock:
-            if not self._native_grep_available:
-                return {}
+        if not self._native_grep_available:
+            return {}
 
+        with self._full_check_lock:
             path = self._settings.global_get_basefolder("uploads")
             self._logger.info(f"Running check on all files in {path} (local storage)")
 
-            full_check_result = {}
+            full_check_result = defaultdict(list)
             for check, params in CHECKS.items():
                 self._logger.info(f"Running check {check}")
                 pattern = params["pattern"]
@@ -224,13 +244,56 @@ class FileCheckPlugin(
                 if result.returncode == 0:
                     for line in result.stdout.text.splitlines():
                         p, _ = line.split(":", 1)
-                        matches.append("local:" + p.replace(path + os.path.sep, ""))
+                        match = p.replace(path + os.path.sep, "")
+                        if get_file_type(match)[-1] == "gcode":
+                            matches.append(match)
 
                 self._logger.info(f"... got {len(matches)} matches")
-                full_check_result[check] = matches
+                for match in matches:
+                    full_check_result[match].append(check)
 
-            self._check_result = full_check_result
-            return full_check_result
+            for f, checks in full_check_result.items():
+                self._save_to_metadata("local", f, checks)
+            self._save_last_check_info()
+
+    def _save_last_check_info(self):
+        data = {
+            "version": CHECKS_VERSION,
+            "timestamp": int(time.time()),
+        }
+
+        try:
+            with open(
+                os.path.join(self.get_plugin_data_folder(), "last_check_info.json"),
+                "w",
+                encoding="utf-8",
+            ) as f:
+                data = json.dump(data, f)
+        except Exception:
+            self._logger.exception(
+                "Could not save information about last full file check"
+            )
+            return
+
+    def _load_last_check_info(self):
+        path = os.path.join(self.get_plugin_data_folder(), "last_check_info.json")
+        if not os.path.isfile(path):
+            return {}
+
+        try:
+            with open(
+                path,
+                encoding="utf-8",
+            ) as f:
+                data = json.load(f)
+                if isinstance(data, dict) and "version" in data and "timestamp" in data:
+                    return data
+        except Exception:
+            self._logger.exception(
+                "Could not load information about last full file check"
+            )
+
+        return {}
 
     def _validate_file(self, storage, path, file_type):
         try:
@@ -254,6 +317,7 @@ class FileCheckPlugin(
                 types.append(check)
 
         if types:
+            self._save_to_metadata(storage, path, types)
             self._notify(storage, path, types)
 
     def _search_through_file(self, path, pattern, incl_comments=False, regex=False):
@@ -308,13 +372,6 @@ class FileCheckPlugin(
                 f"  {t}, see https://faq.octoprint.org/file-check-{t.replace('_', '-')} for details"
             )
 
-        with self._full_check_lock:
-            for t in types:
-                if t not in self._check_result:
-                    self._check_result[t] = []
-                if path not in self._check_result[t]:
-                    self._check_result[t].append(f"{storage}:{path}")
-
         self._plugin_manager.send_plugin_message(
             self._identifier,
             {"action": "notify", "storage": storage, "path": path, "types": types},
@@ -322,8 +379,48 @@ class FileCheckPlugin(
 
     def _trigger_check_update(self):
         self._plugin_manager.send_plugin_message(
-            self._identifier, dict(action="check_update")
+            self._identifier, {"action": "check_update"}
         )
+
+    def _save_to_metadata(self, storage, path, positive_checks):
+        metadata = {
+            "version": CHECKS_VERSION,
+            "checks": positive_checks,
+        }
+        self._file_manager.set_additional_metadata(
+            storage, path, "file_check", metadata, overwrite=True
+        )
+
+    def _gather_from_local_metadata(self):
+        uploads = self._settings.global_get_basefolder("uploads")
+
+        result = {}
+        for path in glob.glob(
+            os.path.join(uploads, "**", ".metadata.json"), recursive=True
+        ):
+            internal_path = path[len(uploads) + 1 : -len(".metadata.json")]
+            from_metadata = self._gather_metadata_from_file(path)
+            result.update(
+                {f"local:{internal_path}{k}": v for k, v in from_metadata.items()}
+            )
+        return result
+
+    def _gather_metadata_from_file(self, path):
+        with open(path, encoding="utf-8") as f:
+            metadata = json.load(f)
+
+        if not isinstance(metadata, dict):
+            return {}
+
+        result = {}
+        for key, value in metadata.items():
+            if (
+                "file_check" in value
+                and isinstance(value["file_check"], dict)
+                and len(value["file_check"].get("checks", []))
+            ):
+                result[key] = value["file_check"]["checks"]
+        return result
 
 
 __plugin_name__ = "File Check"
