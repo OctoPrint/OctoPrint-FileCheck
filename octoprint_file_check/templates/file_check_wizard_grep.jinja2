@@ -1,0 +1,14 @@
+<h3>{{ _("A full File Check is suggested") }}</h3>
+
+<p>{% trans %}
+    The bundled File Check plugin has been updated with new high priority checks. It is recommended to run a
+    full file check now to ensure that you are aware of any critical issues in your uploaded files. Depending on the
+    size of your upload folder, this may take several minutes.
+{% endtrans %}</p>
+
+<p>{% trans %}
+    You can run a full file check by clicking the button below or alternatively at any time from the
+    File Check plugin settings.
+{% endtrans %}</p>
+
+{% include "snippets/fileCheckButton.jinja2" %}
