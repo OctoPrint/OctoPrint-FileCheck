@@ -26,8 +26,8 @@ $(function () {
             leaked_api_key: {
                 message: gettext(
                     "Your file contains an API key that is not supposed to be there. " +
-                        "This is caused by a bug in your slicer, and known to happen with PrusaSlicer (<1.4.0), " +
-                        "BambuStudio (<=1.8.4) and OrcaSlicer (<=1.9.0). " +
+                        "This is caused by a bug in your slicer, and known to happen with PrusaSlicer (<= 2.1.1), " +
+                        "BambuStudio (<= 1.8.4) and OrcaSlicer (<= 1.9.0). " +
                         "Do not share this file with anyone, update your slicer to a patched version immediately, " +
                         "and reslice your file. Also consider changing your API key in OctoPrint, as it might have been leaked by your slicer " +
                         "to third parties through any GCODE files shared previously."
