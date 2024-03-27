@@ -86,6 +86,13 @@ class FileCheckPlugin(
                 self._validate_file, payload["origin"], payload["path"], file_type
             )
 
+    ##~~ SettingsPlugin API
+
+    def get_settings_defaults(self):
+        return {
+            "ignored_checks": [],
+        }
+
     ##~~ SimpleApiPlugin API
 
     def on_api_get(self, request):
@@ -128,21 +135,23 @@ class FileCheckPlugin(
     ##~~ TemplatePlugin API
 
     def get_template_configs(self):
-        if not self._native_grep_available:
-            return []
-
-        return [
-            dict(
-                type="wizard",
-                template="file_check_wizard_grep.jinja2",
-                custom_bindings=True,
-            ),
-            dict(
-                type="settings",
-                template="file_check_settings_grep.jinja2",
-                custom_bindings=True,
-            ),
+        templates = [
+            {
+                "type": "settings",
+                "custom_bindings": True,
+            }
         ]
+
+        if self._native_grep_available:
+            templates.append(
+                {
+                    "type": "wizard",
+                    "template": "file_check_wizard_fullcheck.jinja2",
+                    "custom_bindings": True,
+                }
+            )
+
+        return templates
 
     ##~~ WizardPlugin API
 
@@ -222,9 +231,12 @@ class FileCheckPlugin(
         with self._full_check_lock:
             path = self._settings.global_get_basefolder("uploads")
             self._logger.info(f"Running check on all files in {path} (local storage)")
+            ignored_checks = self._settings.get(["ignored_checks"])
 
             full_check_result = defaultdict(list)
             for check, params in CHECKS.items():
+                if check in ignored_checks:
+                    continue
                 self._logger.info(f"Running check {check}")
                 pattern = params["pattern"]
                 sanitized = self._sanitize_pattern(
@@ -305,8 +317,13 @@ class FileCheckPlugin(
         if file_type[-1] != "gcode":
             return
 
+        ignored_checks = self._settings.get(["ignored_checks"])
+
         types = []
         for check, params in CHECKS.items():
+            if check in ignored_checks:
+                continue
+
             pattern = params["pattern"]
             if self._search_through_file(
                 path_on_disk,
@@ -392,32 +409,42 @@ class FileCheckPlugin(
     def _gather_from_local_metadata(self):
         uploads = self._settings.global_get_basefolder("uploads")
 
+        ignored_checks = self._settings.get(["ignored_checks"])
+
         result = {}
         for path in glob.glob(
             os.path.join(uploads, "**", ".metadata.json"), recursive=True
         ):
             internal_path = path[len(uploads) + 1 : -len(".metadata.json")]
-            from_metadata = self._gather_metadata_from_file(path)
+            from_metadata = self._gather_metadata_from_file(
+                path, ignored_checks=ignored_checks
+            )
             result.update(
                 {f"local:{internal_path}{k}": v for k, v in from_metadata.items()}
             )
         return result
 
-    def _gather_metadata_from_file(self, path):
+    def _gather_metadata_from_file(self, path, ignored_checks=None):
         with open(path, encoding="utf-8") as f:
             metadata = json.load(f)
 
         if not isinstance(metadata, dict):
             return {}
 
+        if ignored_checks is None:
+            ignored_checks = self._settings.get(["ignored_checks"])
+
         result = {}
         for key, value in metadata.items():
-            if (
-                "file_check" in value
-                and isinstance(value["file_check"], dict)
-                and len(value["file_check"].get("checks", []))
-            ):
-                result[key] = value["file_check"]["checks"]
+            if "file_check" in value and isinstance(value["file_check"], dict):
+                filtered = list(
+                    filter(
+                        lambda x: x not in ignored_checks,
+                        value["file_check"].get("checks", []),
+                    )
+                )
+                if len(filtered) > 0:
+                    result[key] = filtered
         return result
 
 

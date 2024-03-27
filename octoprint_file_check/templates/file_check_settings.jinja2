@@ -1,0 +1,30 @@
+<fieldset>
+    <legend>{{ _("Configured checks") }}</legend>
+
+    <p>{% trans %}
+        The following checks are currently configured for your instance. You can enable or disable them as needed.
+    {% endtrans %}</p>
+
+    <form class="form-horizontal" onsubmit="return false;" data-bind="foreach: checksArray">
+        <div class="control-group">
+            <div class="controls">
+                <label class="checkbox">
+                    <input type="checkbox" data-bind="checked: $data.enabled"> <span data-bind="text: $data.title"></span>
+                </label>
+            </div>
+        </div>
+    </form>
+</fieldset>
+
+<fieldset data-bind="visible: fullCheckAvailable">
+    <legend>{{ _("Full file check") }}</legend>
+
+    <p>{% trans %}
+        The bundled File Check plugin allows checking your uploaded files for known slicer misconfigurations and related issues.
+        The plugin automatically checks all freshly uploaded files and files selected for printing, but for already uploaded
+        files you can also trigger a full file check manually. It is recommended to do this whenever new checks are added
+        to the plugin, in which case your last check will be marked as outdated below.
+    {% endtrans %}</p>
+
+    {% include "snippets/fileCheckButton.jinja2" %}
+</fieldset>

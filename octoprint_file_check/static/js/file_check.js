@@ -4,8 +4,9 @@ $(function () {
 
         self.loginState = parameters[0];
         self.access = parameters[1];
-        self.printerState = parameters[2];
-        self.filesViewModel = parameters[3];
+        self.settingsViewModel = parameters[2];
+        self.printerState = parameters[3];
+        self.filesViewModel = parameters[4];
 
         self.fullCheckAvailable = ko.observable(false);
         self.checkResult = ko.observable();
@@ -18,6 +19,7 @@ $(function () {
 
         const ISSUES = {
             travel_speed: {
+                title: gettext("Travel Speed Placeholder"),
                 message: gettext(
                     "Your file still contains a place holder <code>{travel_speed}</code>. " +
                         "This is a common issue when using old start/stop GCODE code snippets in current versions of " +
@@ -27,6 +29,7 @@ $(function () {
                 )
             },
             leaked_api_key: {
+                title: gettext("Leaked API Key"),
                 message: gettext(
                     "Your file contains an API key that is not supposed to be there. " +
                         "This is caused by a bug in your slicer, and known to happen with PrusaSlicer (<= 2.1.1), " +
@@ -39,6 +42,34 @@ $(function () {
             }
         };
 
+        self.checksArray = ko.pureComputed(() => {
+            return Object.keys(ISSUES).map((key) => {
+                return {
+                    key: key,
+                    title: ISSUES[key].title,
+                    message: ISSUES[key].message,
+                    enabled: ko.pureComputed({
+                        read: () => {
+                            return !self.settingsViewModel.settings.plugins.file_check
+                                .ignored_checks()
+                                .includes(key);
+                        },
+                        write: (value) => {
+                            if (value) {
+                                self.settingsViewModel.settings.plugins.file_check.ignored_checks.remove(
+                                    key
+                                );
+                            } else {
+                                self.settingsViewModel.settings.plugins.file_check.ignored_checks.push(
+                                    key
+                                );
+                            }
+                        }
+                    })
+                };
+            });
+        });
+
         self.lastCheckTimestampText = ko.pureComputed(() => {
             return formatDate(self.lastCheckTimestamp(), {
                 placeholder: gettext("unknown")
@@ -47,9 +78,9 @@ $(function () {
 
         self.lastCheckStateText = ko.pureComputed(() => {
             if (self.lastCheckCurrent()) {
-                return gettext("Current set of checks");
+                return gettext("Up to date");
             } else {
-                return gettext("Outdated set of checks");
+                return gettext("Outdated");
             }
         });
 
@@ -308,6 +339,14 @@ $(function () {
             );
         };
 
+        self.onAfterBinding = function () {
+            self.settingsViewModel.settings.plugins.file_check.ignored_checks.subscribe(
+                () => {
+                    self.requestData();
+                }
+            );
+        };
+
         self.onUserLoggedIn = self.onUserLoggedOut = function () {
             self.requestData();
         };
@@ -318,6 +357,7 @@ $(function () {
         dependencies: [
             "loginStateViewModel",
             "accessViewModel",
+            "settingsViewModel",
             "printerStateViewModel",
             "filesViewModel"
         ],
