@@ -337,9 +337,7 @@ class FileCheckPlugin(
                     "implementation: {}".format(result.stderr.text.strip())
                 )
 
-            return self._search_through_file_python(
-                path, sanitized, compiled, incl_comments=incl_comments
-            )
+            return self._search_through_file_python(path, compiled)
 
         except Exception:
             self._logger.exception(
@@ -349,10 +347,10 @@ class FileCheckPlugin(
 
         return False
 
-    def _search_through_file_python(self, path, term, compiled, incl_comments=False):
+    def _search_through_file_python(self, path, compiled):
         with open(path, encoding="utf8", errors="replace") as f:
             for line in f:
-                if term in line and (incl_comments or compiled.match(line)):
+                if compiled.search(line):
                     return True
         return False
 
