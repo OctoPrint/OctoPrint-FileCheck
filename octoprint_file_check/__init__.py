@@ -112,9 +112,9 @@ class FileCheckPlugin(
         if octoprint.access.permissions.Permissions.FILES_LIST.can():
             # only return the check result if the user has permissions
             # to see a file list, otherwise we might leak data
-            response[
-                "check_result"
-            ] = self._gather_from_local_metadata()  # TODO: caching?
+            response["check_result"] = (
+                self._gather_from_local_metadata()
+            )  # TODO: caching?
 
         return flask.jsonify(**response)
 
@@ -183,21 +183,21 @@ class FileCheckPlugin(
     ##~~ SoftwareUpdate hook
 
     def get_update_information(self):
-        return dict(
-            file_check=dict(
-                displayName="File Check Plugin",
-                displayVersion=self._plugin_version,
+        return {
+            "file_check": {
+                "displayName": "File Check Plugin",
+                "displayVersion": self._plugin_version,
                 # version check: github repository
-                type="github_release",
-                user="OctoPrint",
-                repo="OctoPrint-FileCheck",
-                current=self._plugin_version,
-                stable_branch={
+                "type": "github_release",
+                "user": "OctoPrint",
+                "repo": "OctoPrint-FileCheck",
+                "current": self._plugin_version,
+                "stable_branch": {
                     "name": "Stable",
                     "branch": "master",
                     "commitish": ["devel", "master"],
                 },
-                prerelease_branches=[
+                "prerelease_branches": [
                     {
                         "name": "Prerelease",
                         "branch": "devel",
@@ -205,9 +205,9 @@ class FileCheckPlugin(
                     }
                 ],
                 # update method: pip
-                pip="https://github.com/OctoPrint/OctoPrint-FileCheck/archive/{target_version}.zip",
-            )
-        )
+                "pip": "https://github.com/OctoPrint/OctoPrint-FileCheck/archive/{target_version}.zip",
+            }
+        }
 
     ##~~ Internal logic & helpers
 
