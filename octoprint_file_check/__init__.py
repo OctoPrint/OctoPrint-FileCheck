@@ -290,7 +290,13 @@ class FileCheckPlugin(
     def _load_last_check_info(self):
         path = os.path.join(self.get_plugin_data_folder(), "last_check_info.json")
         if not os.path.isfile(path):
-            return {}
+            files = self._file_manager.list_files("local", recursive=False)
+            if not len(files.get("local", {})):
+                # no files there, mark things as up to date
+                self._save_last_check_info()
+            else:
+                # there are files, we can't take that shortcut
+                return {}
 
         try:
             with open(
