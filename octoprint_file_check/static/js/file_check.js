@@ -17,6 +17,8 @@ $(function () {
 
         self.issueNotification = undefined;
 
+        self.checkUpdateOnNextFileRefresh = false;
+
         const ISSUES = {
             travel_speed: {
                 title: gettext("Travel Speed Placeholder"),
@@ -233,6 +235,12 @@ $(function () {
             }
         };
 
+        self.onEventFileAdded = (payload) => {
+            if (payload.operation && payload.operation !== "add") {
+                self.checkUpdateOnNextFileRefresh = true;
+            }
+        };
+
         self._handleNotification = function (data) {
             let severity = "warning";
 
@@ -345,6 +353,13 @@ $(function () {
                     self.requestData();
                 }
             );
+
+            self.filesViewModel.allItems.subscribe(() => {
+                if (self.checkUpdateOnNextFileRefresh) {
+                    self.checkUpdateOnNextFileRefresh = false;
+                    self.requestData();
+                }
+            });
         };
 
         self.onUserLoggedIn = self.onUserLoggedOut = function () {

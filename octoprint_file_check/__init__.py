@@ -75,7 +75,10 @@ class FileCheckPlugin(
     ##~~ EventHandlerPlugin API
 
     def on_event(self, event, payload):
-        if event == octoprint.events.Events.FILE_ADDED:
+        if (
+            event == octoprint.events.Events.FILE_ADDED
+            and payload.get("operation", "add") == "add"
+        ):
             self._executor.submit(
                 self._validate_file, payload["storage"], payload["path"], payload["type"]
             )
