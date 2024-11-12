@@ -45,12 +45,34 @@ jobs:
         run: |
           pre-commit run --all-files --show-diff-on-failure
 
+  e2e:
+    name: 🧪 E2E tests
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        octoprint: ["master", "maintenance"]
+    steps:
+      - name: ⬇ Download build result
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: 🎭 Run OctoPrint's E2E Tests
+        uses: OctoPrint/actions/e2e@main
+        with:
+          ref: ${{ matrix.octoprint }}
+          deps: ${{ github.workspace }}/dist/*.whl
+          suffix: "-${{ matrix.octoprint }}"
+
   publish-on-testpypi:
     name: 📦 Publish on TestPyPI
     if: github.event_name == 'release'
     needs:
       - build
       - pre-commit
+      - e2e
     runs-on: ubuntu-latest
     steps:
       - name: ⬇ Download build result
@@ -61,7 +83,7 @@ jobs:
       - name: 📦 Publish to index
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          repository_url: https://test.pypi.org/legacy/
+          repository-url: https://test.pypi.org/legacy/
 
   publish-on-pypi:
     name: 📦 Publish tagged releases to PyPI
