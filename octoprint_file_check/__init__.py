@@ -48,6 +48,7 @@ class FileCheckPlugin(
 
         self._native_grep_available = False
 
+        self._last_check_mutex = threading.RLock()
         self._full_check_lock = threading.RLock()
         self._check_result = {}
 
@@ -278,12 +279,13 @@ class FileCheckPlugin(
         }
 
         try:
-            with open(
-                os.path.join(self.get_plugin_data_folder(), "last_check_info.json"),
-                "w",
-                encoding="utf-8",
-            ) as f:
-                data = json.dump(data, f)
+            with self._last_check_mutex:
+                with open(
+                    os.path.join(self.get_plugin_data_folder(), "last_check_info.json"),
+                    "w",
+                    encoding="utf-8",
+                ) as f:
+                    data = json.dump(data, f)
         except Exception:
             self._logger.exception(
                 "Could not save information about last full file check"
@@ -302,13 +304,18 @@ class FileCheckPlugin(
                 return {}
 
         try:
-            with open(
-                path,
-                encoding="utf-8",
-            ) as f:
-                data = json.load(f)
-                if isinstance(data, dict) and "version" in data and "timestamp" in data:
-                    return data
+            with self._last_check_mutex:
+                with open(
+                    path,
+                    encoding="utf-8",
+                ) as f:
+                    data = json.load(f)
+                    if (
+                        isinstance(data, dict)
+                        and "version" in data
+                        and "timestamp" in data
+                    ):
+                        return data
         except Exception:
             self._logger.exception(
                 "Could not load information about last full file check"
