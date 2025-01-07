@@ -47,7 +47,7 @@ jobs:
   e2e:
     name: 🧪 E2E tests
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04 # change back to ubuntu-latest once we drop Python 3.7 & upgrade playwright
     strategy:
       matrix:
         octoprint: ["master", "maintenance"]
