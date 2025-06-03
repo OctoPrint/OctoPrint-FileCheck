@@ -1,6 +1,35 @@
 [build-system]
-requires = ["setuptools>=40.8.0", "wheel"]
+requires = ["setuptools>=67", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "OctoPrint-FileCheck"
+version = "2024.11.12"
+description = "Checks for common issues in uploaded files"
+authors = [
+    {name = "Gina Häußge", email = "gina@octoprint.org"}
+]
+maintainers = [
+    {name = "Gina Häußge", email = "gina@octoprint.org"}
+]
+readme = {file = "README.md", content-type = "markdown"}
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
+
+requires-python = ">=3.7, <3.14"
+
+[tool.setuptools]
+include-package-data = true
+packages = ["octoprint_file_check"]
+
+[project.entry-points."octoprint.plugin"]
+file_check = "octoprint_file_check"
+
+[project.optional-dependencies]
+develop = [
+    "pre-commit",
+    "go-task-bin"
+]
 
 [tool.ruff]
 exclude = [
