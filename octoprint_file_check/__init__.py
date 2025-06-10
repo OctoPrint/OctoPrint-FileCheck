@@ -136,6 +136,9 @@ class FileCheckPlugin(
                 headers={"Location": flask.url_for("index") + "api/plugin/file_check"},
             )
 
+    def is_api_protected(self):
+        return True
+
     ##~~ TemplatePlugin API
 
     def get_template_configs(self):
