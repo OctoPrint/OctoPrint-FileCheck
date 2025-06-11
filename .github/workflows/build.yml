@@ -18,10 +18,10 @@ jobs:
           python-version: "3.10"
       - name: 🏗 Install build dependencies
         run: >-
-          python -m pip install wheel --user
+          python -m pip install build --user
       - name: 🔨 Build a binary wheel and a source tarball
         run: >-
-          python setup.py sdist bdist_wheel
+          python -m build
       - name: ⬆ Upload build result
         uses: actions/upload-artifact@v4
         with:
@@ -43,6 +43,23 @@ jobs:
       - name: 🚀 Run pre-commit
         run: |
           pre-commit run --all-files --show-diff-on-failure
+
+  test-install:
+    name: 🧪 Installation test
+    strategy:
+      matrix:
+        python: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
+    runs-on: ubuntu-22.04 # change back to ubuntu-latest once we drop Python 3.7
+    steps:
+      - uses: actions/checkout@v4
+      - name: 🏗 Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
+      - name: 🚀 Set up test dependencies & run test install
+        run: |
+          pip install octoprint
+          pip install -e .[develop]
 
   e2e:
     name: 🧪 E2E tests
