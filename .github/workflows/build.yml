@@ -48,7 +48,7 @@ jobs:
     name: 🧪 Installation test
     strategy:
       matrix:
-        python: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
+        python: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
     runs-on: ubuntu-22.04 # change back to ubuntu-latest once we drop Python 3.7
     steps:
       - uses: actions/checkout@v4
@@ -68,6 +68,7 @@ jobs:
     strategy:
       matrix:
         octoprint: ["master", "maintenance"]
+        python: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
     steps:
       - name: ⬇ Download build result
         uses: actions/download-artifact@v4
@@ -79,8 +80,9 @@ jobs:
         uses: OctoPrint/actions/e2e@main
         with:
           ref: ${{ matrix.octoprint }}
+          python: ${{ matrix.python }}
           deps: ${{ github.workspace }}/dist/*.whl
-          suffix: "-${{ matrix.octoprint }}"
+          suffix: "-${{ matrix.octoprint }}-py${{ matrix.python }}"
 
   publish-on-testpypi:
     name: 📦 Publish on TestPyPI
