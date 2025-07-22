@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "OctoPrint-FileCheck"
-version = "2024.11.12"
+version = "2025.7.22"
 description = "Checks for common issues in uploaded files"
 authors = [
     { name = "Gina Häußge", email = "gina@octoprint.org" },
