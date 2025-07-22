@@ -31,7 +31,7 @@ develop = [
 
 [project.readme]
 file = "README.md"
-content-type = "markdown"
+content-type = "text/markdown"
 
 [tool.setuptools]
 include-package-data = true
