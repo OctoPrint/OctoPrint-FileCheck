@@ -47,6 +47,7 @@ jobs:
   test-install:
     name: 🧪 Installation test
     strategy:
+      fail-fast: false
       matrix:
         python: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
     runs-on: ubuntu-22.04 # change back to ubuntu-latest once we drop Python 3.7
@@ -61,7 +62,7 @@ jobs:
           pip install octoprint
           pip install -e .[develop]
 
-  e2e:
+  test-e2e:
     name: 🧪 E2E tests
     needs: build
     runs-on: ubuntu-22.04 # change back to ubuntu-latest once we drop Python 3.7 & upgrade playwright
@@ -96,7 +97,8 @@ jobs:
     needs:
       - build
       - pre-commit
-      - e2e
+      - test-install
+      - test-e2e
     runs-on: ubuntu-latest
     permissions:
       id-token: write
