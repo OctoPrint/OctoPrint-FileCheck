@@ -66,9 +66,15 @@ jobs:
     needs: build
     runs-on: ubuntu-22.04 # change back to ubuntu-latest once we drop Python 3.7 & upgrade playwright
     strategy:
+      fail-fast: false
       matrix:
         octoprint: ["master", "maintenance"]
         python: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+        exclude:
+          - octoprint: "maintenance"
+            python: "3.7"
+          - octoprint: "maintenance"
+            python: "3.8"
     steps:
       - name: ⬇ Download build result
         uses: actions/download-artifact@v4
