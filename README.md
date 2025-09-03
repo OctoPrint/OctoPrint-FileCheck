@@ -21,7 +21,7 @@ the press of a button (if `grep` is available), not just freshly uploaded files.
 The plugin is part of the core dependencies of OctoPrint 1.4.1+ and will be installed automatically alongside it.
 
 In case you want to manually install it for whatever reason, install via the bundled
-[Plugin Manager](https://docs.octoprint.org/en/master/bundledplugins/pluginmanager.html)
+[Plugin Manager](https://docs.octoprint.org/en/main/bundledplugins/pluginmanager.html)
 or manually using this URL:
 
     https://github.com/OctoPrint/OctoPrint-FileCheck/archive/master.zip
