@@ -69,12 +69,16 @@ jobs:
       fail-fast: false
       matrix:
         octoprint: ["main", "dev"]
-        python: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+        python: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
         exclude:
+          - octoprint: "main"
+            python: "3.14"
           - octoprint: "dev"
             python: "3.7"
           - octoprint: "dev"
             python: "3.8"
+          - octoprint: "dev"
+            python: "3.9"
     steps:
       - name: ⬇ Download build result
         uses: actions/download-artifact@v4
